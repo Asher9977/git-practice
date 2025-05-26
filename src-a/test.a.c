@@ -2,7 +2,8 @@
 
 int main(void){
 
-	printf("hello, world.\n");
+	printf("hello, world a.\n");
+	printf("hello, world b.\n");
 
 	return 0;
 }
