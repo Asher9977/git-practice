@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>三字母最短重疊合併（A~J 可留空）</title>
+  <style>
+    :root { color-scheme: light dark; }
+
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial;
+      margin: 16px;
+      line-height: 1.45;
+      -webkit-text-size-adjust: 100%;
+    }
+    h1{ margin: 0 0 10px; font-size: 20px; }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .muted{ opacity:.82; font-size:12px; }
+    .danger{ color:#ff6b6b; }
+
+    input[type="text"]{
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(127,127,127,.35);
+      background: transparent;
+      font-size: 16px; /* iOS focus no-zoom */
+    }
+    button{
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(127,127,127,.45);
+      background: rgba(127,127,127,.12);
+      cursor: pointer;
+    }
+    button:hover{ filter: brightness(1.05); }
+
+    .grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin: 10px 0 14px;
+    }
+    .card{
+      border: 1px solid rgba(127,127,127,.35);
+      border-radius: 12px;
+      padding: 10px;
+      min-width: 0;
+    }
+    label{ display:block; font-size: 12px; opacity:.9; margin-bottom: 6px; }
+
+    .row{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .nowrap{ white-space: nowrap; }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid rgba(127,127,127,.35);
+      border-radius: 999px;
+      font-size: 12px;
+      opacity:.95;
+      max-width: 100%;
+    }
+    .pill input[type="text"]{ width: 160px; padding: 8px 10px; font-size: 16px; }
+
+    .tableWrap{
+      max-height: 55vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid rgba(127,127,127,.25);
+      border-radius: 12px;
+    }
+    table{ width:100%; border-collapse: collapse; margin-top:10px; min-width: 900px; }
+    th, td{
+      border-bottom: 1px solid rgba(127,127,127,.25);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+      word-break: break-word;
+    }
+    th{
+      position: sticky;
+      top: 0;
+      background: rgba(127,127,127,.10);
+      backdrop-filter: blur(6px);
+      z-index: 1;
+    }
+
+    details{ margin-top: 10px; }
+    summary{ cursor: pointer; }
+    textarea{
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 140px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(127,127,127,.35);
+      background: transparent;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px){
+      h1{ font-size: 18px; }
+      .row{ flex-direction: column; align-items: stretch; }
+      .row > *{ width: 100%; }
+      .nowrap{ white-space: normal; }
+      button{ width: 100%; }
+      .pill{ width: 100%; justify-content: space-between; }
+      .pill input[type="text"]{ width: 55%; }
+      .tableWrap{ max-height: 60vh; }
+      table{ min-width: 980px; } /* allow horizontal swipe */
+    }
+  </style>
+</head>
+<body>
+  <h1>三字母最短重疊合併（固定順序：XYZ）</h1>
+  <div class="muted">
+    規則：允許重疊且重疊處必須相同；對固定順序 XYZ，搜尋「無插入空白」的最短合併字串。<br/>
+    <b>相同字母可以相連，但相鄰相同字母必須引入新的數字</b>（例如 A=131 時，AAA 不能是 131，必須像 1313131 這種會變長的結果）。<br/>
+    <b>支援 A~J 共 10 組</b>：你可以把不想用的組留空，留空的字母不會參與排列。<br/>
+    會輸出：合併後數字串、各字母起點 starts=(s1,s2,s3)、長度。
+  </div>
+
+  <div class="grid" id="grid">
+    <!-- A~J inputs -->
+    <div class="card"><label for="A">A</label><input id="A" type="text" value="1231" /></div>
+    <div class="card"><label for="B">B</label><input id="B" type="text" value="1331" /></div>
+    <div class="card"><label for="C">C</label><input id="C" type="text" value="332" /></div>
+    <div class="card"><label for="D">D</label><input id="D" type="text" value="312" /></div>
+    <div class="card"><label for="E">E</label><input id="E" type="text" value="132" /></div>
+    <div class="card"><label for="F">F</label><input id="F" type="text" value="1233" /></div>
+    <div class="card"><label for="G">G</label><input id="G" type="text" placeholder="留空=不使用" /></div>
+    <div class="card"><label for="H">H</label><input id="H" type="text" placeholder="留空=不使用" /></div>
+    <div class="card"><label for="I">I</label><input id="I" type="text" placeholder="留空=不使用" /></div>
+    <div class="card"><label for="J">J</label><input id="J" type="text" placeholder="留空=不使用" /></div>
+  </div>
+
+  <div class="row">
+    <label class="nowrap"><input id="distinctOnly" type="checkbox" /> 只列出「三個字母皆不同」的排列（例如 ABC；會排除 DAD / AAA）</label>
+    <label class="nowrap"><input id="groupMode" type="checkbox" /> 分組模式（同一組無序三字母只列最短解）</label>
+    <label class="nowrap"><input id="debug" type="checkbox" /> Debug（顯示起點與覆蓋）</label>
+    <span class="pill">Only: <input id="only" type="text" placeholder="例如 DAD / AAA / ABC / 留空=全部" /></span>
+    <button id="run">計算</button>
+    <button id="copy">複製結果（TSV）</button>
+    <span id="status" class="muted"></span>
+  </div>
+
+  <div id="error" class="danger"></div>
+
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:90px">Order</th>
+          <th>最短合併字串</th>
+          <th style="width:180px">starts (0-based)</th>
+          <th style="width:70px">len</th>
+          <th style="width:120px">group</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <details>
+    <summary>Debug 輸出</summary>
+    <textarea id="debugOut" readonly></textarea>
+  </details>
+
+<script>
+(function(){
+  const ALL = ["A","B","C","D","E","F","G","H","I","J"];
+
+  function enabledLetters(){
+    const letters = [];
+    for (const L of ALL){
+      const el = document.getElementById(L);
+      if (!el) continue;
+      const v = el.value.trim();
+      if (v.length > 0) letters.push(L);
+    }
+    return letters;
+  }
+
+  function getMap(letters){
+    const P = {};
+    for (const L of letters) P[L] = document.getElementById(L).value.trim();
+    return P;
+  }
+
+  function isDigitsOnly(s){ return /^[0-9]+$/.test(s); }
+
+  function groupKey(order){ return order.split("").sort().join(""); }
+
+  function covers(pos, start, len){ return pos >= start && pos < start + len; }
+
+  function buildString(Ps, starts, lens){
+    const L = Math.max(starts[0]+lens[0], starts[1]+lens[1], starts[2]+lens[2]);
+    const arr = new Array(L).fill(null);
+
+    // no gaps
+    for (let pos=0; pos<L; pos++){
+      const covered =
+        covers(pos, starts[0], lens[0]) ||
+        covers(pos, starts[1], lens[1]) ||
+        covers(pos, starts[2], lens[2]);
+      if (!covered) return null;
+    }
+
+    // fill & conflict check
+    for (let i=0;i<3;i++){
+      const s = Ps[i], st = starts[i];
+      for (let j=0;j<s.length;j++){
+        const pos = st + j;
+        const ch = s[j];
+        if (arr[pos] === null) arr[pos] = ch;
+        else if (arr[pos] !== ch) return null;
+      }
+    }
+
+    if (arr.some(x => x === null)) return null;
+    return arr.join("");
+  }
+
+  // Placement solver with rule: if adjacent letters identical, start must strictly increase
+  function solveOrderByPlacement(order, P, debugLines){
+    const L1=order[0], L2=order[1], L3=order[2];
+    const s1=P[L1], s2=P[L2], s3=P[L3];
+    const lens=[s1.length, s2.length, s3.length];
+
+    const maxL = lens[0]+lens[1]+lens[2];
+    const start1 = 0;
+
+    let best = null;
+    const tieBetter = (a,b) => {
+      if (a.len !== b.len) return a.len < b.len;
+      if (a.merged !== b.merged) return a.merged < b.merged;
+      for (let i=0;i<3;i++){
+        if (a.starts[i] !== b.starts[i]) return a.starts[i] < b.starts[i];
+      }
+      return false;
+    };
+
+    const start2Min = (L2===L1) ? 1 : 0;
+
+    for (let start2=start2Min; start2<=maxL; start2++){
+      if (start2 > lens[0]) break; // no gaps
+
+      const start3Min = (L3===L2) ? (start2+1) : start2;
+
+      for (let start3=start3Min; start3<=maxL; start3++){
+        const coveredEnd12 = Math.max(lens[0], start2 + lens[1]);
+        if (start3 > coveredEnd12) break; // no gaps
+
+        const starts=[start1, start2, start3];
+        const merged = buildString([s1,s2,s3], starts, lens);
+        if (merged === null) continue;
+
+        const cand = { order, merged, starts, len: merged.length };
+        if (best === null || tieBetter(cand, best)) best = cand;
+      }
+    }
+
+    if (best && debugLines){
+      debugLines.push(`[${order}] best=${best.merged} starts=(${best.starts.join(",")}) len=${best.len}`);
+      debugLines.push(`  ${L1}=${s1}`);
+      debugLines.push(`  ${L2}=${s2}`);
+      debugLines.push(`  ${L3}=${s3}`);
+      debugLines.push("");
+    }
+
+    return best;
+  }
+
+  function validateInputs(letters, P){
+    for (const L of letters){
+      const v = P[L];
+      if (!v) continue;
+      if (!isDigitsOnly(v)) throw new Error(`${L} 只能包含數字（0-9），目前是：${v}`);
+    }
+  }
+
+  function generateOrders(letters, distinctOnly, only){
+    if (only){
+      const o = only.toUpperCase().trim();
+      if (o.length !== 3) throw new Error("Only 必須是 3 個字母，例如 DAD、AAA、ABC");
+      for (const ch of o){
+        if (!letters.includes(ch)) throw new Error(`Only 包含未啟用字母：${ch}（請先在上方填入該字母的數字串，或改用已啟用字母）`);
+      }
+      if (distinctOnly && (o[0]===o[1] || o[0]===o[2] || o[1]===o[2])) throw new Error("你勾選了「三個字母皆不同」，因此像 DAD / AAA 會被排除");
+      return [o];
+    }
+
+    const out = [];
+    const n = letters.length;
+    if (n < 1) return out;
+
+    if (distinctOnly){
+      if (n < 3) return out;
+      for (let i=0;i<n;i++){
+        for (let j=0;j<n;j++){
+          if (j===i) continue;
+          for (let k=0;k<n;k++){
+            if (k===i || k===j) continue;
+            out.push(letters[i]+letters[j]+letters[k]);
+          }
+        }
+      }
+    } else {
+      // allow repeats: n^3 (n up to 10 => 1000)
+      for (let i=0;i<n;i++){
+        for (let j=0;j<n;j++){
+          for (let k=0;k<n;k++){
+            out.push(letters[i]+letters[j]+letters[k]);
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  function clearTable(){ document.getElementById("tbody").innerHTML = ""; }
+
+  function addRow(r){
+    const tr = document.createElement("tr");
+    const td1 = document.createElement("td"); td1.innerHTML = `<code>${r.order}</code>`;
+    const td2 = document.createElement("td"); td2.innerHTML = `<code>${r.merged}</code>`;
+    const td3 = document.createElement("td"); td3.innerHTML = `<code>(${r.starts.join(",")})</code>`;
+    const td4 = document.createElement("td"); td4.textContent = String(r.len);
+    const td5 = document.createElement("td"); td5.innerHTML = `<code>${groupKey(r.order)}</code>`;
+    tr.append(td1, td2, td3, td4, td5);
+    document.getElementById("tbody").appendChild(tr);
+  }
+
+  function run(){
+    const status = document.getElementById("status");
+    const error = document.getElementById("error");
+    const debugOut = document.getElementById("debugOut");
+    error.textContent = "";
+    status.textContent = "";
+    debugOut.value = "";
+    clearTable();
+
+    try{
+      const letters = enabledLetters();
+      if (letters.length < 1) throw new Error("請至少填入 1 組字母的數字串（A~J 任意）。");
+      const P = getMap(letters);
+      validateInputs(letters, P);
+
+      const distinctOnly = document.getElementById("distinctOnly").checked;
+      const groupMode = document.getElementById("groupMode").checked;
+      const debug = document.getElementById("debug").checked;
+      const only = document.getElementById("only").value;
+
+      const orders = generateOrders(letters, distinctOnly, only);
+      if (orders.length === 0) {
+        if (distinctOnly && letters.length < 3) throw new Error("你選了「三個字母皆不同」，但啟用的字母少於 3 個。");
+        throw new Error("沒有可計算的排列（請檢查勾選與輸入）。");
+      }
+
+      const debugLines = debug ? [] : null;
+      const rows = [];
+      for (const o of orders){
+        const r = solveOrderByPlacement(o, P, debugLines);
+        if (r) rows.push(r);
+      }
+
+      rows.sort((a,b) => (a.len-b.len) || (a.order.localeCompare(b.order)) || (a.merged.localeCompare(b.merged)));
+
+      if (!groupMode){
+        for (const r of rows) addRow(r);
+        status.textContent = `啟用字母=${letters.join("")}｜共 ${rows.length} 筆（len 升冪）`;
+      } else {
+        const m = new Map();
+        for (const r of rows){
+          const gk = groupKey(r.order);
+          if (!m.has(gk)) m.set(gk, []);
+          m.get(gk).push(r);
+        }
+        const groups = Array.from(m.keys()).sort();
+        let shown = 0;
+        for (const gk of groups){
+          const items = m.get(gk);
+          const minLen = Math.min(...items.map(x=>x.len));
+          const best = items.filter(x=>x.len===minLen);
+          best.sort((a,b) => (a.order.localeCompare(b.order)) || (a.merged.localeCompare(b.merged)));
+          for (const r of best){ addRow(r); shown++; }
+        }
+        status.textContent = `啟用字母=${letters.join("")}｜分組=${groups.length} 組｜顯示最短解 ${shown} 筆`;
+      }
+
+      if (debugLines) debugOut.value = debugLines.join("\n");
+    } catch(e){
+      error.textContent = String(e.message || e);
+    }
+  }
+
+  function toTSV(){
+    const rows = [];
+    const trs = document.getElementById("tbody").querySelectorAll("tr");
+    for (const tr of trs){
+      const tds = tr.querySelectorAll("td");
+      rows.push([
+        tds[0]?.innerText?.trim() ?? "",
+        tds[1]?.innerText?.trim() ?? "",
+        tds[2]?.innerText?.trim() ?? "",
+        tds[3]?.innerText?.trim() ?? "",
+        tds[4]?.innerText?.trim() ?? "",
+      ].join("\t"));
+    }
+    return ["Order\tMerged\tStarts\tLen\tGroup", ...rows].join("\n");
+  }
+
+  async function copyTSV(){
+    const txt = toTSV();
+    try{
+      await navigator.clipboard.writeText(txt);
+      document.getElementById("status").textContent = "已複製到剪貼簿（TSV）";
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      document.getElementById("status").textContent = "已複製到剪貼簿（TSV, fallback）";
+    }
+  }
+
+  document.getElementById("run").addEventListener("click", run);
+  document.getElementById("copy").addEventListener("click", copyTSV);
+
+  run();
+})();
+</script>
+</body>
+</html>
